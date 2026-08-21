@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Python Discombobulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --panel: #141414;
+  --panel-2: #1c1c1c;
+  --border: #2a2a2a;
+  --text: #e8e8e8;
+  --text-dim: #9a9a9a;
+  --accent: #f5b700;
+  --accent-dim: #7a5c00;
+  --danger: #ff5c5c;
+  --radius: 10px;
+}
+* { box-sizing: border-box; }
+html, body {
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+header, footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+footer {
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+  justify-content: center;
+}
+header h1 {
+  font-size: 18px;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.backlink {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 13px;
+  border-bottom: 1px dotted var(--text-dim);
+}
+.backlink:hover { color: var(--accent); border-color: var(--accent); }
+.header-left { display: flex; align-items: center; gap: 10px; }
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-dim);
+}
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.control-group {
+  display: flex;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.control-group button {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  padding: 10px 14px;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+.control-group button:last-child { border-right: none; }
+.control-group button.active {
+  background: var(--accent);
+  color: #1a1400;
+}
+select#audienceSelect {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.editor-wrap {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #1e1e1e;
+  min-height: 220px;
+}
+.editor-inner {
+  position: relative;
+  min-height: 220px;
+  height: 40vh;
+  max-height: 400px;
+}
+.editor-inner textarea, .editor-inner pre {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  border: none;
+  box-sizing: border-box;
+  overflow: auto;
+  white-space: pre;
+  tab-size: 4;
+}
+.editor-inner textarea {
+  z-index: 2;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--accent);
+  resize: none;
+  -webkit-text-fill-color: transparent;
+}
+.editor-inner pre {
+  z-index: 1;
+  pointer-events: none;
+  background: transparent;
+}
+.editor-inner pre code.hljs {
+  background: transparent;
+  padding: 0;
+  display: block;
+}
+.syntax-status {
+  font-size: 12px;
+  min-height: 16px;
+  color: var(--text-dim);
+}
+.syntax-status.valid { color: var(--accent); }
+.syntax-status.error { color: var(--danger); }
+.detect-hint {
+  font-size: 12px;
+  color: var(--accent);
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.detect-hint.show { display: flex; }
+.detect-hint button {
+  background: var(--accent);
+  color: #1a1400;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  min-height: 32px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.submit-btn {
+  background: var(--accent);
+  color: #1a1400;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  min-height: 48px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.results-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  min-height: 100px;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--text);
+}
+.results-panel.empty {
+  color: var(--text-dim);
+  font-style: italic;
+}
+.results-panel.error { color: var(--danger); }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  width: 100%;
+  max-width: 380px;
+}
+.modal h2 {
+  font-size: 16px;
+  margin: 0 0 16px 0;
+}
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 44px;
+  font-size: 14px;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.modal-actions button {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+.btn-save {
+  background: var(--accent);
+  color: #1a1400;
+  border: none;
+}
+.btn-close {
+  background: transparent;
+  color: var(--text-dim);
+}
+label.small-note {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Python Discombobulator</h1>
+  </div>
+  <div class="header-left">
+    <a class="backlink" href="https://augustineiacopelli.github.io/appaday/">AppADay</a>
+    <button class="icon-btn" id="gearBtn" aria-label="Settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <div class="controls-row">
+    <div class="control-group" id="granularityGroup">
+      <button data-val="summary" class="active">Summary</button>
+      <button data-val="line">Line by Line</button>
+    </div>
+    <select id="audienceSelect">
+      <option value="beginner">Beginner</option>
+      <option value="intermediate" selected>Intermediate</option>
+      <option value="terse">Terse</option>
+    </select>
+    <div class="control-group" id="modeGroup">
+      <button data-val="code" class="active">Code</button>
+      <button data-val="traceback">Traceback</button>
+    </div>
+  </div>
+
+  <div class="editor-wrap">
+    <div class="editor-inner">
+      <textarea id="codeInput" spellcheck="false" placeholder="Paste Python code or a traceback here..."></textarea>
+      <pre aria-hidden="true"><code id="highlightCode" class="language-python"></code></pre>
+    </div>
+  </div>
+
+  <div class="syntax-status" id="syntaxStatus"></div>
+
+  <div class="detect-hint" id="detectHint">
+    <span id="detectHintText"></span>
+    <button id="detectHintBtn">Switch Mode</button>
+  </div>
+
+  <button class="submit-btn" id="submitBtn">Explain It</button>
+
+  <div class="results-panel empty" id="resultsPanel">Results will appear here.</div>
+
+</main>
+
+<footer>
+  <a class="backlink" href="https://augustineiacopelli.github.io/appaday/">AppADay Portfolio</a>
+</footer>
+
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal">
+    <h2>Settings</h2>
+    <div class="field">
+      <label for="apiKeyInput">Anthropic API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    </div>
+    <div class="field">
+      <label for="sessionNameInput">Session Name</label>
+      <input type="text" id="sessionNameInput" placeholder="Optional label">
+    </div>
+    <label class="small-note">Your key is stored only in this browser's local storage. It is never sent anywhere except directly to Anthropic's API.</label>
+    <div class="modal-actions">
+      <button class="btn-close" id="settingsCloseBtn">Close</button>
+      <button class="btn-save" id="settingsSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CLAUDE_MODEL = 'claude-sonnet-5';
+const API_ENDPOINT = 'https://api.anthropic.com/v1/messages';
+
+let state = {
+  granularity: 'summary',
+  audience: 'intermediate',
+  mode: 'code',
+  rawText: ''
+};
+
+let astInfo = null;
+let pyodideInstance = null;
+let pyodideLoading = false;
+let pyodideAttempted = false;
+let syntaxCheckTimer = null;
+
+const PYODIDE_SCRIPT_URL = 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
+
+const PY_ANALYZE_SRC = [
+  'import ast, json',
+  'def _analyze(src):',
+  '    try:',
+  '        tree = ast.parse(src)',
+  '    except SyntaxError as e:',
+  '        return json.dumps({"ok": False, "line": e.lineno, "message": str(e.msg)})',
+  '    functions = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]',
+  '    classes = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]',
+  '    imports = []',
+  '    for n in ast.walk(tree):',
+  '        if isinstance(n, ast.Import):',
+  '            for a in n.names:',
+  '                imports.append(a.name)',
+  '        elif isinstance(n, ast.ImportFrom):',
+  '            imports.append(n.module or "")',
+  '    line_count = len(src.splitlines())',
+  '    return json.dumps({"ok": True, "functions": functions, "classes": classes, "imports": imports, "line_count": line_count})',
+  '_analyze(_src)'
+].join('\n');
+
+const codeInput = document.getElementById('codeInput');
+const highlightCode = document.getElementById('highlightCode');
+const highlightPre = highlightCode.parentElement;
+const submitBtn = document.getElementById('submitBtn');
+const resultsPanel = document.getElementById('resultsPanel');
+const syntaxStatus = document.getElementById('syntaxStatus');
+const detectHint = document.getElementById('detectHint');
+const detectHintText = document.getElementById('detectHintText');
+const detectHintBtn = document.getElementById('detectHintBtn');
+const gearBtn = document.getElementById('gearBtn');
+const settingsOverlay = document.getElementById('settingsOverlay');
+const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+const settingsSaveBtn = document.getElementById('settingsSaveBtn');
+const apiKeyInput = document.getElementById('apiKeyInput');
+const sessionNameInput = document.getElementById('sessionNameInput');
+const granularityGroup = document.getElementById('granularityGroup');
+const modeGroup = document.getElementById('modeGroup');
+const audienceSelect = document.getElementById('audienceSelect');
+
+function loadSettings() {
+  try {
+    const key = localStorage.getItem('pyExplainer_apiKey');
+    const session = localStorage.getItem('pyExplainer_sessionName');
+    if (key) apiKeyInput.value = key;
+    if (session) sessionNameInput.value = session;
+  } catch (e) {
+    console.error('localStorage read failed', e);
+  }
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem('pyExplainer_apiKey', apiKeyInput.value.trim());
+    localStorage.setItem('pyExplainer_sessionName', sessionNameInput.value.trim());
+  } catch (e) {
+    console.error('localStorage write failed', e);
+  }
+  settingsOverlay.classList.remove('show');
+}
+
+function getStoredKey() {
+  try {
+    return localStorage.getItem('pyExplainer_apiKey') || '';
+  } catch (e) {
+    console.error('localStorage read failed', e);
+    return '';
+  }
+}
+
+function updateSyntaxStatus(kind, text) {
+  syntaxStatus.classList.remove('valid', 'error');
+  if (kind === 'valid') syntaxStatus.classList.add('valid');
+  if (kind === 'error') syntaxStatus.classList.add('error');
+  syntaxStatus.textContent = text || '';
+}
+
+function ensurePyodideLoading() {
+  if (pyodideInstance || pyodideLoading || pyodideAttempted) return;
+  pyodideAttempted = true;
+  pyodideLoading = true;
+  updateSyntaxStatus('loading', 'Loading Python syntax checker...');
+
+  let settled = false;
+  let onWindowError, onWindowRejection, timeoutId;
+
+  function cleanup() {
+    clearTimeout(timeoutId);
+    window.removeEventListener('error', onWindowError);
+    window.removeEventListener('unhandledrejection', onWindowRejection);
+  }
+
+  function failLoading() {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    pyodideLoading = false;
+    submitBtn.disabled = false;
+    updateSyntaxStatus('idle', 'Syntax checker unavailable here. You can still submit as normal.');
+  }
+
+  function succeed(inst) {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    pyodideInstance = inst;
+    pyodideLoading = false;
+    updateSyntaxStatus('idle', '');
+    checkSyntax(state.rawText);
+  }
+
+  onWindowError = function(e) {
+    console.error('pyodide window error', e);
+    failLoading();
+  };
+  onWindowRejection = function(e) {
+    console.error('pyodide unhandled rejection', e && e.reason);
+    failLoading();
+  };
+  window.addEventListener('error', onWindowError);
+  window.addEventListener('unhandledrejection', onWindowRejection);
+  timeoutId = setTimeout(failLoading, 12000);
+
+  try {
+    const script = document.createElement('script');
+    script.src = PYODIDE_SCRIPT_URL;
+    script.onload = function() {
+      try {
+        loadPyodide().then(succeed).catch(function(e) {
+          console.error('pyodide init failed', e);
+          failLoading();
+        });
+      } catch (e) {
+        console.error('pyodide init threw synchronously', e);
+        failLoading();
+      }
+    };
+    script.onerror = function(e) {
+      console.error('pyodide script load failed', e);
+      failLoading();
+    };
+    document.head.appendChild(script);
+  } catch (e) {
+    console.error('pyodide load setup failed', e);
+    failLoading();
+  }
+}
+
+function scheduleSyntaxCheck() {
+  if (state.mode !== 'code') {
+    astInfo = null;
+    updateSyntaxStatus('idle', '');
+    submitBtn.disabled = false;
+    return;
+  }
+  if (!pyodideInstance) return;
+  clearTimeout(syntaxCheckTimer);
+  syntaxCheckTimer = setTimeout(function() {
+    checkSyntax(state.rawText);
+  }, 500);
+}
+
+function checkSyntax(text) {
+  if (!pyodideInstance || state.mode !== 'code') return;
+  if (!text || !text.trim()) {
+    astInfo = null;
+    updateSyntaxStatus('idle', '');
+    submitBtn.disabled = false;
+    return;
+  }
+  try {
+    pyodideInstance.globals.set('_src', text);
+    const resultJson = pyodideInstance.runPython(PY_ANALYZE_SRC);
+    const parsed = JSON.parse(resultJson);
+    if (parsed.ok) {
+      astInfo = parsed;
+      updateSyntaxStatus('valid', 'Syntax OK - ' + parsed.functions.length + ' function(s), ' + parsed.classes.length + ' class(es), ' + parsed.line_count + ' line(s)');
+      submitBtn.disabled = false;
+    } else {
+      astInfo = null;
+      updateSyntaxStatus('error', 'Syntax error on line ' + parsed.line + ': ' + parsed.message);
+      submitBtn.disabled = true;
+    }
+  } catch (e) {
+    console.error('syntax check failed', e);
+    astInfo = null;
+    updateSyntaxStatus('idle', '');
+    submitBtn.disabled = false;
+  }
+}
+
+function syncHighlight() {
+  const text = codeInput.value;
+  highlightCode.textContent = text;
+  try {
+    delete highlightCode.dataset.highlighted;
+    hljs.highlightElement(highlightCode);
+  } catch (e) {
+    console.error('highlight failed', e);
+  }
+  highlightPre.scrollTop = codeInput.scrollTop;
+  highlightPre.scrollLeft = codeInput.scrollLeft;
+  state.rawText = text;
+  runDetection(text);
+  scheduleSyntaxCheck();
+}
+
+function detectMode(text) {
+  if (!text || !text.trim()) return null;
+  const tracebackMarkers = ['Traceback (most recent call last)', 'File "', 'Error:'];
+  let hits = 0;
+  tracebackMarkers.forEach(function(marker) {
+    if (text.indexOf(marker) !== -1) hits++;
+  });
+  if (hits >= 2) return 'traceback';
+  return 'code';
+}
+
+function runDetection(text) {
+  const suggested = detectMode(text);
+  if (!suggested || suggested === state.mode) {
+    detectHint.classList.remove('show');
+    return;
+  }
+  detectHintText.textContent = 'This looks like a ' + (suggested === 'traceback' ? 'traceback' : 'code snippet') + '.';
+  detectHint.dataset.suggested = suggested;
+  detectHint.classList.add('show');
+}
+
+detectHintBtn.addEventListener('click', function() {
+  const suggested = detectHint.dataset.suggested;
+  if (!suggested) return;
+  setMode(suggested);
+  detectHint.classList.remove('show');
+  scheduleSyntaxCheck();
+});
+
+function setMode(val) {
+  state.mode = val;
+  Array.from(modeGroup.querySelectorAll('button')).forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.val === val);
+  });
+}
+
+granularityGroup.addEventListener('click', function(e) {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  state.granularity = btn.dataset.val;
+  Array.from(granularityGroup.querySelectorAll('button')).forEach(function(b) {
+    b.classList.toggle('active', b === btn);
+  });
+});
+
+modeGroup.addEventListener('click', function(e) {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  setMode(btn.dataset.val);
+  runDetection(state.rawText);
+  scheduleSyntaxCheck();
+});
+
+audienceSelect.addEventListener('change', function() {
+  state.audience = audienceSelect.value;
+});
+
+function buildPrompt(text, granularity, audience, mode, astInfo) {
+  let lines = [];
+  if (mode === 'traceback') {
+    lines.push('You are explaining a Python traceback/error to a developer.');
+    lines.push('Identify the root cause, the exact line or operation that failed, and the most likely fix.');
+  } else {
+    lines.push('You are explaining a piece of Python code to a developer.');
+  }
+  if (granularity === 'line') {
+    lines.push('Walk through the logic line by line, in order, explaining what each meaningful line does. Reference the actual line numbers from the source below.');
+    if (astInfo && mode === 'code') {
+      lines.push('For reference, this source was parsed and confirmed syntactically valid. It has ' + astInfo.line_count + ' line(s) total.');
+      if (astInfo.functions.length) lines.push('Top-level functions defined: ' + astInfo.functions.join(', '));
+      if (astInfo.classes.length) lines.push('Classes defined: ' + astInfo.classes.join(', '));
+      if (astInfo.imports.length) lines.push('Modules imported: ' + astInfo.imports.join(', '));
+    }
+  } else {
+    lines.push('Give a concise, high-level summary of what the code does overall, its inputs, and its outputs.');
+  }
+  if (audience === 'beginner') {
+    lines.push('Write for a beginner. Avoid jargon, or define it immediately when used. Use plain language and short sentences.');
+  } else if (audience === 'terse') {
+    lines.push('Be as terse as possible. No filler, no pleasantries, no restating the question. Bullet-style density in prose form is fine.');
+  } else {
+    lines.push('Write for an intermediate developer who knows basic syntax but may not know Python-specific idioms or standard library details.');
+  }
+  lines.push('Here is the ' + (mode === 'traceback' ? 'traceback' : 'code') + ':');
+  lines.push('');
+  lines.push(text);
+  return lines.join('\n');
+}
+
+async function callClaude(promptText) {
+  const apiKey = getStoredKey();
+  if (!apiKey) {
+    renderOutput('No API key found. Open Settings (gear icon) and add your Anthropic API key first.', true);
+    return;
+  }
+  if (!state.rawText || !state.rawText.trim()) {
+    renderOutput('Paste some Python code or a traceback before submitting.', true);
+    return;
+  }
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Thinking...';
+  resultsPanel.classList.remove('error', 'empty');
+  resultsPanel.textContent = 'Working on it...';
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 1500,
+        messages: [
+          { role: 'user', content: promptText }
+        ]
+      })
+    });
+    if (!response.ok) {
+      const errBody = await response.text();
+      console.error('API error', response.status, errBody);
+      if (response.status === 401 || response.status === 403) {
+        renderOutput('Authentication failed. Check that your API key in Settings is correct.', true);
+      } else {
+        renderOutput('The request failed (status ' + response.status + '). Check your connection and try again.', true);
+      }
+      return;
+    }
+    const data = await response.json();
+    const textBlocks = (data.content || [])
+      .filter(function(item) { return item.type === 'text'; })
+      .map(function(item) { return item.text; });
+    const fullText = textBlocks.join('\n');
+    renderOutput(fullText || 'No explanation was returned.', false);
+  } catch (e) {
+    console.error('Network or unexpected error', e);
+    renderOutput('Network error. Check your internet connection and try again.', true);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Explain It';
+  }
+}
+
+function renderOutput(responseText, isError) {
+  resultsPanel.classList.remove('empty');
+  resultsPanel.classList.toggle('error', !!isError);
+  while (resultsPanel.firstChild) {
+    resultsPanel.removeChild(resultsPanel.firstChild);
+  }
+  resultsPanel.textContent = responseText;
+}
+
+submitBtn.addEventListener('click', function() {
+  const promptText = buildPrompt(state.rawText, state.granularity, state.audience, state.mode, astInfo);
+  callClaude(promptText);
+});
+
+codeInput.addEventListener('focus', ensurePyodideLoading);
+codeInput.addEventListener('input', syncHighlight);
+codeInput.addEventListener('scroll', function() {
+  highlightPre.scrollTop = codeInput.scrollTop;
+  highlightPre.scrollLeft = codeInput.scrollLeft;
+});
+
+gearBtn.addEventListener('click', function() {
+  settingsOverlay.classList.add('show');
+});
+settingsCloseBtn.addEventListener('click', function() {
+  settingsOverlay.classList.remove('show');
+});
+settingsSaveBtn.addEventListener('click', saveSettings);
+settingsOverlay.addEventListener('click', function(e) {
+  if (e.target === settingsOverlay) settingsOverlay.classList.remove('show');
+});
+
+loadSettings();
+syncHighlight();
+</script>
+
+</body>
+</html>
